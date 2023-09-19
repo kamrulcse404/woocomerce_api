@@ -4,32 +4,36 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Woocomerce;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class OrderController extends Controller
 {
     public function index()
     {
-        $woocomerces = Woocomerce::all();
+        if (Cache::has('user_orders')) {
+            $user_orders = Cache::get('user_orders');
+        }else {
+            $woocomerces = Woocomerce::all();
 
-        $urls = [];
-
-        foreach ($woocomerces as  $woocomerce) {
-
-
-
-            $page = 1;
-            $per_page = 50;
-
-            while ($page <= 10) {
-                $url = $woocomerce['api_url'] . 'wp-json/wc/v2/orders?consumer_key=' . $woocomerce['api_key'] . '&' . 'consumer_secret=' . $woocomerce['api_secret'] . '&per_page=' . $per_page . '&page=' . $page.'&order=desc';
-
-                // asc
-                array_push($urls, $url);
-                $page++;
+            $urls = [];
+    
+            foreach ($woocomerces as  $woocomerce) {
+                $page = 1;
+                $per_page = 50;
+    
+                while ($page <= 10) {
+                    $url = $woocomerce['api_url'] . 'wp-json/wc/v2/orders?consumer_key=' . $woocomerce['api_key'] . '&' . 'consumer_secret=' . $woocomerce['api_secret'] . '&per_page=' . $per_page . '&page=' . $page.'&order=desc';
+    
+                    // asc
+                    array_push($urls, $url);
+                    $page++;
+                }
             }
+    
         }
 
+       
         $user_orders = $this->fetchData($urls);
         // dd($user_orders);
         return view('backend.order.index', compact('user_orders'));
@@ -61,3 +65,4 @@ class OrderController extends Controller
         return $orders;
     }
 }
+
